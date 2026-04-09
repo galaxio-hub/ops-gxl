@@ -1,0 +1,68 @@
+mod helm_ops {
+
+    #[auto_load(entry)]
+    flow __into {
+        gx.read_file( file : "./_used.json" ) ;
+        
+    }
+     #[task(name="${APP_NAME}@k8s:install")]
+    flow install {
+      gx.echo (value: "------------------------------docker load ${APP_NAME} 镜像------------------------------");
+      operators.load_docker_images(AIR_GAPPED:"${AIR_GAPPED}",RUNTIME:"${RUNTIME}",OUTPUT_FILE:"${GXL_PRJ_ROOT}/artifacts/${APP_NAME}.tar");
+      gx.echo ( "----------------------------------end-----------------------------------" );
+      gx.echo ( value : "------------------------------开始安装 ${APP_NAME}------------------------------" );
+      gx.cmd ( cmd : "cat local/confs/Chart.yaml | grep version" );
+      gx.cmd ( cmd : "helm upgrade --install ${APP_NAME} local/confs/ -n ${NAMESPACE} --create-namespace --kubeconfig ${KUBECONFIG}" );
+      gx.echo ( value : "------------------------------${APP_NAME} 安装完成------------------------------" );
+    }
+
+    #[task(name="${APP_NAME}@k8s:uninstall")]
+    flow uninstall {
+      gx.echo ( value : "------------------------------开始卸载 ${APP_NAME}------------------------------" );
+      gx.cmd ( cmd : "helm uninstall ${APP_NAME} -n ${NAMESPACE} --kubeconfig ${KUBECONFIG}" );
+      gx.echo ( value : "------------------------------${APP_NAME} 卸载完成------------------------------" );
+    }
+
+    #[task(name="${APP_NAME}@k8s:upgrade")]
+    flow update {
+      gx.echo ( value : "------------------------------开始升级 ${APP_NAME}------------------------------" );
+      gx.cmd ( cmd : "cat local/confs/Chart.yaml | grep version" );
+      gx.cmd ( cmd : "helm upgrade ${APP_NAME} local/confs/ -n ${NAMESPACE} --kubeconfig ${KUBECONFIG}" );
+      gx.echo ( value : "------------------------------${APP_NAME} 升级完成------------------------------" );
+    }
+    #[task(name="${APP_NAME}@k8s:status")]
+    flow status {
+      gx.echo ( "" );
+      gx.echo ( "------------------------------${APP_NAME}状态------------------------------" );
+      gx.cmd ( cmd : "kubectl get all -n ${NAMESPACE} -l app.kubernetes.io/instance=${APP_NAME} --kubeconfig ${KUBECONFIG} -owide" );
+      gx.echo ( "----------------------------------end-----------------------------------" );
+
+    }
+    #[task(name="${APP_NAME}@k8s:download")]
+    flow download {
+      gx.echo ( value : "----------------------------${APP_NAME}镜像下载----------------------------" );
+      gx.cmd (cmd : "mkdir ${GXL_PRJ_ROOT}/artifacts || true"); 
+      operators.save_docker_images(YAML_FILE:"${ENV_SPEC_DIR}/artifact.yml",OUTPUT_FILE:"${GXL_PRJ_ROOT}/artifacts/${APP_NAME}.tar",TARGET_REGISTRY:"${IMAGE_REGISTRY}");
+      gx.echo ( value : "----------------------------------end-----------------------------------")
+    }
+    #[task(name="${APP_NAME}@k8s:restart")]
+    flow restart {
+      gx.echo ( value : "${APP_NAME} 未实现restart接口" );
+    }
+    #[task(name="${APP_NAME}@k8s:stop")]
+    flow stop {
+      gx.echo ( value : "${APP_NAME} 未实现stop接口" );
+    }
+    #[task(name="${APP_NAME}@k8s:start")]
+    flow start {
+      gx.echo ( value : "${APP_NAME} 未实现start接口" );
+    }
+    
+    fn save_docker_images(YAML_FILE,OUTPUT_FILE,TARGET_REGISTRY){
+      gx.shell(shell: "sudo bash @PATH/save_docker_images.sh ${YAML_FILE} ${OUTPUT_FILE} ${TARGET_REGISTRY}") ;
+    }
+    fn load_docker_images(AIR_GAPPED,RUNTIME,OUTPUT_FILE){
+      gx.shell(shell: "sudo bash @PATH/load_docker_images.sh ${AIR_GAPPED} ${RUNTIME} ${OUTPUT_FILE}") ;
+    }
+
+}
