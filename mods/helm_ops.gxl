@@ -59,10 +59,10 @@ mod helm_ops {
     }
     
     fn save_docker_images(YAML_FILE,OUTPUT_FILE,TARGET_REGISTRY){
-      gx.shell(shell: "sudo bash @PATH/save_docker_images.sh ${YAML_FILE} ${OUTPUT_FILE} ${TARGET_REGISTRY}") ;
+      gx.shell(shell: "bash @PATH/save_docker_images.sh ${YAML_FILE} ${OUTPUT_FILE} ${TARGET_REGISTRY}") ;
     }
     fn load_docker_images(AIR_GAPPED,RUNTIME,OUTPUT_FILE){
-      gx.shell(shell: "sudo bash @PATH/load_docker_images.sh ${AIR_GAPPED} ${RUNTIME} ${OUTPUT_FILE}") ;
+      gx.shell(shell: "bash @PATH/load_docker_images.sh ${AIR_GAPPED} ${RUNTIME} ${OUTPUT_FILE}") ;
     }
 
 }
