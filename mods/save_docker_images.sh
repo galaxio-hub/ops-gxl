@@ -30,7 +30,7 @@ while read -r URL NAME VERSION LOCAL; do
 done < <(awk '
   /^- name:/ {name=$3}
   /^  version:/ {version=$2}
-  /^  origin_addr:/ {getline; match($0,/url: (.*)/,a); url=a[1]}
+  /^  origin_addr:/ {getline; sub(/^[[:space:]]*url:[[:space:]]*/,""); url=$0}
   /^  local:/ {local=$2; print url,name,version,local}
 ' "$YAML_FILE")
 
