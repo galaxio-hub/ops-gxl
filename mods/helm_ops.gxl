@@ -3,12 +3,9 @@ mod helm_ops {
     #[auto_load(entry)]
     flow __into {
         gx.read_file( file : "./_used.json" ) ;
-        // 制品（镜像 tar）目录：嵌入系统运行时提升到 host 级 `sys/<model>/local/cache`（同模型共享）；
-        // 独立模块回退到模块级 `artifacts/`
-        artifact_dir = "${GXL_PRJ_ROOT}/artifacts";
-        if defined(${ENV_SYS_MODEL}) {
-            artifact_dir = "../../local/cache";
-        }
+        // 镜像 tar 放在「共享 local」的 cache（与 host 模块一致）：
+        // 系统内 → sys/<model>/local/cache；独立运行 → <repo>/local/cache。可用 GXL_SHARED_LOCAL 覆盖。
+        artifact_dir = "${GXL_SHARED_LOCAL:../../local}/cache";
     }
      #[task(name="${APP_NAME}@k8s:install")]
     flow install {
