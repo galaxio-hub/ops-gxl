@@ -3,12 +3,17 @@ mod helm_ops {
     #[auto_load(entry)]
     flow __into {
         gx.read_file( file : "./_used.json" ) ;
-        
+        // 制品（镜像 tar）目录：嵌入系统运行时提升到 host 级 `sys/<model>/local/cache`（同模型共享）；
+        // 独立模块回退到模块级 `artifacts/`
+        artifact_dir = "${GXL_PRJ_ROOT}/artifacts";
+        if defined(${ENV_SYS_MODEL}) {
+            artifact_dir = "../../local/cache";
+        }
     }
      #[task(name="${APP_NAME}@k8s:install")]
     flow install {
       gx.echo (value: "------------------------------docker load ${APP_NAME} 镜像------------------------------");
-      operators.load_docker_images(AIR_GAPPED:"${AIR_GAPPED}",RUNTIME:"${RUNTIME}",OUTPUT_FILE:"${GXL_PRJ_ROOT}/artifacts/${APP_NAME}.tar");
+      operators.load_docker_images(AIR_GAPPED:"${AIR_GAPPED}",RUNTIME:"${RUNTIME}",OUTPUT_FILE:"${artifact_dir}/${APP_NAME}.tar");
       gx.echo ( "----------------------------------end-----------------------------------" );
       gx.echo ( value : "------------------------------开始安装 ${APP_NAME}------------------------------" );
       gx.cmd ( cmd : "cat local/confs/Chart.yaml | grep version" );
@@ -41,8 +46,8 @@ mod helm_ops {
     #[task(name="${APP_NAME}@k8s:download")]
     flow download {
       gx.echo ( value : "----------------------------${APP_NAME}镜像下载----------------------------" );
-      gx.cmd (cmd : "mkdir ${GXL_PRJ_ROOT}/artifacts || true"); 
-      operators.save_docker_images(YAML_FILE:"${ENV_SPEC_DIR}/artifact.yml",OUTPUT_FILE:"${GXL_PRJ_ROOT}/artifacts/${APP_NAME}.tar",TARGET_REGISTRY:"${IMAGE_REGISTRY}");
+      gx.cmd (cmd : "mkdir -p ${artifact_dir}"); 
+      operators.save_docker_images(YAML_FILE:"${ENV_SPEC_DIR}/artifact.yml",OUTPUT_FILE:"${artifact_dir}/${APP_NAME}.tar",TARGET_REGISTRY:"${IMAGE_REGISTRY}");
       gx.echo ( value : "----------------------------------end-----------------------------------")
     }
     #[task(name="${APP_NAME}@k8s:restart")]
